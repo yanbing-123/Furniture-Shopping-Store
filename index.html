@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>优品家具 - 让家更温馨</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#" class="logo">优品<span>家具</span></a>
+      <nav class="nav" id="mainNav">
+        <a href="#home" class="nav-link active">首页</a>
+        <a href="#products" class="nav-link">全部商品</a>
+        <a href="#categories" class="nav-link">分类</a>
+        <a href="#about" class="nav-link">关于我们</a>
+      </nav>
+      <div class="header-actions">
+        <button class="cart-btn" id="cartBtn" aria-label="购物车">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+        <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1>品质家具 · 温馨生活</h1>
+      <p>精选优质木材，匠心工艺打造每一件家具，为您营造理想的家居空间</p>
+      <a href="#products" class="btn btn-primary">立即选购</a>
+    </div>
+  </section>
+
+  <!-- Features Strip -->
+  <section class="features">
+    <div class="container features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">&#128666;</div>
+        <div><strong>免费配送</strong><span>满2999包邮</span></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">&#128260;</div>
+        <div><strong>品质保证</strong><span>五年质保</span></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">&#128179;</div>
+        <div><strong>安心付款</strong><span>货到付款</span></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">&#128230;</div>
+        <div><strong>七天退换</strong><span>无忧购物</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="section" id="categories">
+    <div class="container">
+      <h2 class="section-title">商品分类</h2>
+      <p class="section-desc">发现适合您家居风格的家具</p>
+      <div class="categories-grid" id="categoriesGrid"></div>
+    </div>
+  </section>
+
+  <!-- Products -->
+  <section class="section" id="products">
+    <div class="container">
+      <h2 class="section-title">全部商品</h2>
+      <p class="section-desc">精选品质家具，打造理想家居</p>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-category="all">全部</button>
+        <button class="filter-btn" data-category="沙发">沙发</button>
+        <button class="filter-btn" data-category="床">床</button>
+        <button class="filter-btn" data-category="桌椅">桌椅</button>
+        <button class="filter-btn" data-category="柜子">柜子</button>
+        <button class="filter-btn" data-category="灯具">灯具</button>
+      </div>
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="section about" id="about">
+    <div class="container">
+      <div class="about-content">
+        <div class="about-text">
+          <h2>关于优品家具</h2>
+          <p>优品家具成立于2015年，专注于生产高品质、环保的现代家具。我们精选北美白橡木、德国榉木等优质原材料，结合传统榫卯工艺与现代设计理念，为您打造既美观又耐用的家具产品。</p>
+          <p>我们承诺所有产品均符合国家环保标准，并提供五年质保服务。让每一位客户都能安心选购，满意而归。</p>
+          <div class="stats">
+            <div class="stat"><span class="stat-num" data-target="5000">0</span><span class="stat-label">+ 满意客户</span></div>
+            <div class="stat"><span class="stat-num" data-target="200">0</span><span class="stat-label">+ 产品款式</span></div>
+            <div class="stat"><span class="stat-num" data-target="15">0</span><span class="stat-label">+ 年经验</span></div>
+          </div>
+        </div>
+        <div class="about-image">
+          <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&h=400&fit=crop" alt="关于我们">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h4>优品家具</h4>
+        <p>让每一件家具都成为家的艺术品</p>
+      </div>
+      <div class="footer-col">
+        <h4>快捷链接</h4>
+        <a href="#">关于我们</a>
+        <a href="#">联系我们</a>
+        <a href="#">帮助中心</a>
+        <a href="#">配送说明</a>
+      </div>
+      <div class="footer-col">
+        <h4>客户服务</h4>
+        <a href="#">售后政策</a>
+        <a href="#">退换流程</a>
+        <a href="#">投诉建议</a>
+        <a href="#">常见问题</a>
+      </div>
+      <div class="footer-col">
+        <h4>联系我们</h4>
+        <p>电话: 400-888-6666</p>
+        <p>邮箱: service@youpin.com</p>
+        <p>地址: 上海市浦东新区家具产业园</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 优品家具 YouPin Furniture. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Cart Sidebar -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h3>购物车</h3>
+      <button class="cart-close" id="cartClose">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <span class="cart-empty-icon">&#128722;</span>
+        <p>购物车是空的</p>
+        <p>快去选购心仪的家具吧</p>
+      </div>
+    </div>
+    <div class="cart-footer" id="cartFooter">
+      <div class="cart-total">
+        <span>合计</span>
+        <span class="total-price" id="totalPrice">¥0</span>
+      </div>
+      <button class="btn btn-primary btn-full" id="checkoutBtn">去结算</button>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div class="modal-overlay" id="checkoutOverlay">
+    <div class="modal" id="checkoutModal">
+      <button class="modal-close" id="checkoutClose">&times;</button>
+      <h3>结算信息</h3>
+      <form id="checkoutForm">
+        <div class="form-group">
+          <label for="name">收件人姓名</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+          <label for="phone">联系电话</label>
+          <input type="tel" id="phone" required>
+        </div>
+        <div class="form-group">
+          <label for="address">收货地址</label>
+          <input type="text" id="address" required>
+        </div>
+        <div class="form-group">
+          <label for="note">备注</label>
+          <textarea id="note" rows="3"></textarea>
+        </div>
+        <div class="order-summary">
+          <p>商品数量: <span id="orderCount">0</span> 件</p>
+          <p>订单总额: <span id="orderTotal">¥0</span></p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">确认下单</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
