@@ -3,7 +3,13 @@
 
   // ===== State =====
   let cart = JSON.parse(localStorage.getItem('yf-cart')) || [];
+  let favorites = JSON.parse(localStorage.getItem('yf-favorites')) || [];
   let currentFilter = 'all';
+  let currentDetailId = null;
+  let detailQty = 1;
+  let searchKeyword = '';
+  let filterPriceMin = '';
+  let filterPriceMax = '';
 
   // ===== DOM refs =====
   const $ = (s, p = document) => p.querySelector(s);
@@ -20,6 +26,36 @@
   const toast = $('#toast');
   const mainNav = $('#mainNav');
   const menuToggle = $('#menuToggle');
+
+  // Product detail modal
+  const productDetailOverlay = $('#productDetailOverlay');
+  const productDetailClose = $('#productDetailClose');
+  const detailImage = $('#detailImage');
+  const detailCategory = $('#detailCategory');
+  const detailName = $('#detailName');
+  const detailPrice = $('#detailPrice');
+  const detailDesc = $('#detailDesc');
+  const detailQtyEl = $('#detailQty');
+  const detailQtyDec = $('#detailQtyDec');
+  const detailQtyInc = $('#detailQtyInc');
+  const detailAddCart = $('#detailAddCart');
+  const recommendGrid = $('#recommendGrid');
+
+  // Wishlist
+  const wishlistBtn = $('#wishlistBtn');
+  const wishlistCount = $('#wishlistCount');
+  const wishlistNav = $('#wishlistNav');
+  const wishlistSidebar = $('#wishlistSidebar');
+  const wishlistOverlay = $('#wishlistOverlay');
+  const wishlistClose = $('#wishlistClose');
+  const wishlistItems = $('#wishlistItems');
+
+  // Search & Filter
+  const searchInput = $('#searchInput');
+  const searchClear = $('#searchClear');
+  const priceMinInput = $('#priceMin');
+  const priceMaxInput = $('#priceMax');
+  const priceFilterBtn = $('#priceFilterBtn');
 
   // ===== Render Categories =====
   function renderCategories() {
@@ -44,20 +80,48 @@
     });
   }
 
-  // ===== Render Products =====
+  // ===== Render Products (with search, price filter, favorites) =====
   function renderProducts() {
     if (!productsGrid) return;
-    const filtered = currentFilter === 'all'
-      ? products
+
+    // Apply category filter
+    let filtered = currentFilter === 'all'
+      ? [...products]
       : products.filter(p => p.category === currentFilter);
 
+    // Apply search filter
+    if (searchKeyword.trim()) {
+      const kw = searchKeyword.trim().toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(kw) ||
+        (p.keywords && p.keywords.some(k => k.toLowerCase().includes(kw)))
+      );
+    }
+
+    // Apply price filter (reject negatives)
+    const min = Math.max(0, parseFloat(filterPriceMin) || 0);
+    const max = Math.max(0, parseFloat(filterPriceMax) || 0);
+    if (min > 0) filtered = filtered.filter(p => p.price >= min);
+    if (max > 0) filtered = filtered.filter(p => p.price <= max);
+
     if (filtered.length === 0) {
-      productsGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-light)">暂无相关商品</p>';
+      productsGrid.innerHTML = `
+        <div class="no-result">
+          <span class="no-result-icon">&#128270;</span>
+          <p>未找到相关商品</p>
+          <p style="font-size:0.85rem;margin-top:8px;">试试其他关键词或调整筛选条件</p>
+        </div>
+      `;
       return;
     }
 
     productsGrid.innerHTML = filtered.map(p => `
       <div class="product-card" data-id="${p.id}">
+        <button class="favorite-btn ${favorites.includes(p.id) ? 'active' : ''}" data-id="${p.id}" title="${favorites.includes(p.id) ? '取消收藏' : '收藏'}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="${favorites.includes(p.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
         <img class="product-img" src="${p.image}" alt="${p.name}" loading="lazy">
         <div class="product-body">
           <div class="product-name">${p.name}</div>
@@ -159,7 +223,134 @@
     renderCartItems();
   }
 
+  // ===== Product Detail Modal =====
+  function openDetail(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    currentDetailId = productId;
+    detailQty = 1;
+
+    detailImage.src = product.image;
+    detailImage.alt = product.name;
+    detailCategory.textContent = product.category;
+    detailName.textContent = product.name;
+    detailPrice.textContent = `¥${product.price.toLocaleString()}`;
+    detailDesc.textContent = product.description;
+    detailQtyEl.textContent = '1';
+
+    renderRecommendations(product);
+    productDetailOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    productDetailOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function renderRecommendations(currentProduct) {
+    if (!recommendGrid) return;
+    const sameCategory = products.filter(p =>
+      p.category === currentProduct.category && p.id !== currentProduct.id
+    );
+    if (sameCategory.length === 0) {
+      recommendGrid.innerHTML = '<p style="grid-column:1/-1;color:var(--text-light);font-size:0.85rem;text-align:center;padding:12px 0;">暂无同分类商品</p>';
+      return;
+    }
+    recommendGrid.innerHTML = sameCategory.map(p => `
+      <div class="recommend-item" data-id="${p.id}">
+        <img src="${p.image}" alt="${p.name}" loading="lazy">
+        <div class="rec-name">${p.name}</div>
+        <div class="rec-price">¥${p.price.toLocaleString()}</div>
+      </div>
+    `).join('');
+  }
+
+  // ===== Favorites / Wishlist =====
+  function toggleFavorite(productId, btnEl) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const idx = favorites.indexOf(productId);
+    const adding = idx === -1;
+
+    if (adding) {
+      favorites.push(productId);
+      showToast(`已收藏「${product.name}」`);
+    } else {
+      favorites.splice(idx, 1);
+      showToast(`已取消收藏「${product.name}」`);
+    }
+
+    // Update button DOM directly instead of full re-render
+    if (btnEl) {
+      btnEl.classList.toggle('active', adding);
+      btnEl.title = adding ? '取消收藏' : '收藏';
+      const svg = btnEl.querySelector('svg');
+      if (svg) svg.setAttribute('fill', adding ? 'currentColor' : 'none');
+    }
+
+    localStorage.setItem('yf-favorites', JSON.stringify(favorites));
+    updateWishlistUI();
+  }
+
+  function saveFavorites() {
+    localStorage.setItem('yf-favorites', JSON.stringify(favorites));
+    updateWishlistUI();
+    renderProducts();
+  }
+
+  function updateWishlistUI() {
+    wishlistCount.textContent = favorites.length;
+  }
+
+  function renderWishlistItems() {
+    if (!wishlistItems) return;
+    if (favorites.length === 0) {
+      wishlistItems.innerHTML = `
+        <div class="cart-empty">
+          <span class="cart-empty-icon">&#10084;&#65039;</span>
+          <p>心愿单还是空的</p>
+          <p>收藏喜欢的家具，慢慢挑选吧</p>
+        </div>
+      `;
+      return;
+    }
+
+    const items = favorites.map(id => products.find(p => p.id === id)).filter(Boolean);
+    wishlistItems.innerHTML = items.map(item => `
+      <div class="cart-item" data-id="${item.id}">
+        <img class="cart-item-img" src="${item.image}" alt="${item.name}">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-price">¥${item.price.toLocaleString()}</div>
+          <div class="cart-item-footer">
+            <div class="wishlist-item-actions">
+              <button class="btn btn-primary wishlist-add-cart" data-id="${item.id}">加入购物车</button>
+              <button class="btn btn-remove wishlist-remove" data-id="${item.id}">移除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openWishlist() {
+    closeCart(); // Close cart sidebar first if open
+    renderWishlistItems();
+    wishlistSidebar.classList.add('open');
+    wishlistOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeWishlist() {
+    wishlistSidebar.classList.remove('open');
+    wishlistOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
   function openCart() {
+    closeWishlist(); // Close wishlist sidebar first if open
     cartSidebar?.classList.add('open');
     cartOverlay?.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -202,7 +393,141 @@
 
   // ===== Event Listeners =====
 
-  // Product filter
+  // ===== Product Detail Modal Events =====
+
+  // Open detail on product card click (not on button clicks)
+  document.addEventListener('click', e => {
+    const card = e.target.closest('.product-card');
+    if (!card) return;
+    // Don't open detail when clicking add-to-cart or favorite button
+    if (e.target.closest('.add-cart-btn') || e.target.closest('.favorite-btn')) return;
+    const id = Number(card.dataset.id);
+    if (id) openDetail(id);
+  });
+
+  // Close detail
+  productDetailClose?.addEventListener('click', closeDetail);
+  productDetailOverlay?.addEventListener('click', e => {
+    if (e.target === productDetailOverlay) closeDetail();
+  });
+
+  // Detail quantity
+  detailQtyDec?.addEventListener('click', () => {
+    if (detailQty > 1) {
+      detailQty--;
+      detailQtyEl.textContent = detailQty;
+    }
+  });
+  detailQtyInc?.addEventListener('click', () => {
+    detailQty++;
+    detailQtyEl.textContent = detailQty;
+  });
+
+  // Detail add to cart
+  detailAddCart?.addEventListener('click', () => {
+    const product = products.find(p => p.id === currentDetailId);
+    if (!product) return;
+
+    const existing = cart.find(item => item.id === currentDetailId);
+    if (existing) {
+      existing.qty += detailQty;
+    } else {
+      cart.push({ ...product, qty: detailQty });
+    }
+    saveCart();
+    showToast(`${product.name} x${detailQty} 已加入购物车`);
+    closeDetail();
+  });
+
+  // Click same-category recommendation
+  recommendGrid?.addEventListener('click', e => {
+    const item = e.target.closest('.recommend-item');
+    if (!item) return;
+    const id = Number(item.dataset.id);
+    if (id) openDetail(id);
+  });
+
+  // Keyboard ESC close detail
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && productDetailOverlay?.classList.contains('open')) {
+      closeDetail();
+    }
+    if (e.key === 'Escape' && checkoutOverlay?.classList.contains('open')) {
+      closeCheckout();
+    }
+  });
+
+  // ===== Wishlist Events =====
+  // Favorite toggle (updates button DOM directly, no full re-render)
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.favorite-btn');
+    if (btn) {
+      e.stopPropagation();
+      toggleFavorite(Number(btn.dataset.id), btn);
+    }
+  });
+
+  wishlistBtn?.addEventListener('click', openWishlist);
+  wishlistNav?.addEventListener('click', e => {
+    e.preventDefault();
+    openWishlist();
+  });
+  wishlistOverlay?.addEventListener('click', closeWishlist);
+  wishlistClose?.addEventListener('click', closeWishlist);
+
+  // Wishlist item actions
+  document.addEventListener('click', e => {
+    const addCart = e.target.closest('.wishlist-add-cart');
+    if (addCart) {
+      const id = Number(addCart.dataset.id);
+      addToCart(id);
+      return;
+    }
+    const remove = e.target.closest('.wishlist-remove');
+    if (remove) {
+      const id = Number(remove.dataset.id);
+      const idx = favorites.indexOf(id);
+      if (idx > -1) {
+        favorites.splice(idx, 1);
+        saveFavorites();
+        renderWishlistItems();
+        showToast('已从心愿单移除');
+      }
+    }
+  });
+
+  // ===== Search & Filter Events =====
+  let searchDebounceTimer;
+  searchInput?.addEventListener('input', () => {
+    searchKeyword = searchInput.value;
+    searchClear.classList.toggle('visible', searchKeyword.length > 0);
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(renderProducts, 300);
+  });
+
+  searchClear?.addEventListener('click', () => {
+    searchInput.value = '';
+    searchKeyword = '';
+    searchClear.classList.remove('visible');
+    renderProducts();
+    searchInput.focus();
+  });
+
+  function applyPriceFilter() {
+    filterPriceMin = priceMinInput.value;
+    filterPriceMax = priceMaxInput.value;
+    renderProducts();
+  }
+
+  priceFilterBtn?.addEventListener('click', applyPriceFilter);
+
+  [priceMinInput, priceMaxInput].forEach(el => {
+    el?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') applyPriceFilter();
+    });
+  });
+
+  // ===== Category Filter =====
   document.querySelector('.filter-bar')?.addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn');
     if (!btn) return;
@@ -337,6 +662,7 @@
     renderCategories();
     renderProducts();
     updateCartUI();
+    updateWishlistUI();
   }
 
   // Run after DOM ready
