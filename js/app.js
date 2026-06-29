@@ -98,11 +98,11 @@
       );
     }
 
-    // Apply price filter
-    const min = parseFloat(filterPriceMin);
-    const max = parseFloat(filterPriceMax);
-    if (!isNaN(min)) filtered = filtered.filter(p => p.price >= min);
-    if (!isNaN(max)) filtered = filtered.filter(p => p.price <= max);
+    // Apply price filter (reject negatives)
+    const min = Math.max(0, parseFloat(filterPriceMin) || 0);
+    const max = Math.max(0, parseFloat(filterPriceMax) || 0);
+    if (min > 0) filtered = filtered.filter(p => p.price >= min);
+    if (max > 0) filtered = filtered.filter(p => p.price <= max);
 
     if (filtered.length === 0) {
       productsGrid.innerHTML = `
@@ -267,19 +267,31 @@
   }
 
   // ===== Favorites / Wishlist =====
-  function toggleFavorite(productId) {
+  function toggleFavorite(productId, btnEl) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
     const idx = favorites.indexOf(productId);
-    if (idx > -1) {
-      favorites.splice(idx, 1);
-      showToast(`已取消收藏「${product.name}」`);
-    } else {
+    const adding = idx === -1;
+
+    if (adding) {
       favorites.push(productId);
       showToast(`已收藏「${product.name}」`);
+    } else {
+      favorites.splice(idx, 1);
+      showToast(`已取消收藏「${product.name}」`);
     }
-    saveFavorites();
+
+    // Update button DOM directly instead of full re-render
+    if (btnEl) {
+      btnEl.classList.toggle('active', adding);
+      btnEl.title = adding ? '取消收藏' : '收藏';
+      const svg = btnEl.querySelector('svg');
+      if (svg) svg.setAttribute('fill', adding ? 'currentColor' : 'none');
+    }
+
+    localStorage.setItem('yf-favorites', JSON.stringify(favorites));
+    updateWishlistUI();
   }
 
   function saveFavorites() {
@@ -324,6 +336,7 @@
   }
 
   function openWishlist() {
+    closeCart(); // Close cart sidebar first if open
     renderWishlistItems();
     wishlistSidebar.classList.add('open');
     wishlistOverlay.classList.add('open');
@@ -337,6 +350,7 @@
   }
 
   function openCart() {
+    closeWishlist(); // Close wishlist sidebar first if open
     cartSidebar?.classList.add('open');
     cartOverlay?.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -444,12 +458,12 @@
   });
 
   // ===== Wishlist Events =====
-  // Favorite toggle
+  // Favorite toggle (updates button DOM directly, no full re-render)
   document.addEventListener('click', e => {
     const btn = e.target.closest('.favorite-btn');
     if (btn) {
       e.stopPropagation();
-      toggleFavorite(Number(btn.dataset.id));
+      toggleFavorite(Number(btn.dataset.id), btn);
     }
   });
 
@@ -483,10 +497,12 @@
   });
 
   // ===== Search & Filter Events =====
+  let searchDebounceTimer;
   searchInput?.addEventListener('input', () => {
     searchKeyword = searchInput.value;
     searchClear.classList.toggle('visible', searchKeyword.length > 0);
-    renderProducts();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(renderProducts, 300);
   });
 
   searchClear?.addEventListener('click', () => {
